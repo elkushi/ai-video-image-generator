@@ -1,0 +1,32 @@
+# Local environments and build outputs (rebuilt inside the image)
+.venv/
+**/node_modules/
+app/web/dist/
+studio/out/
+hyperframes/.hyperframes/
+**/__pycache__/
+**/*.pyc
+
+# Disposable or per-install data (mounted as volumes at runtime)
+.tmp/
+output/
+assets/music/*.mp3
+assets/music/*.wav
+assets/music/*.m4a
+
+# Secrets never go into the image
+.env
+credentials.json
+token.json
+.claude/settings.local.json
+
+# Client brand kits stay out of the image (licensed fonts, internal profiles); mount them as a volume
+brands/*
+!brands/_template/
+!brands/demo/
+
+# Repo / editor noise
+.git/
+.github/
+.vscode/
+.DS_Store

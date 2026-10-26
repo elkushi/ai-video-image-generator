@@ -1,0 +1,31 @@
+# HTTPS reverse proxy with per-invitee basic auth in front of the factory (invite-only beta;
+# the app itself has no accounts yet).
+# FACTORY_DOMAIN: a real domain pointing at this server gets a Let's Encrypt certificate automatically;
+# "localhost" gets Caddy's internal self-signed certificate.
+# Invitees live in deploy/users.caddy, one per line: `<name> <bcrypt hash>`.
+#   make invite NAME=alice        (prompts for a password, appends the line; then `make reload-proxy`)
+# See deploy/users.caddy.example.
+{$FACTORY_DOMAIN:localhost} {
+	encode zstd gzip
+
+	basic_auth {
+		import /etc/caddy/users.caddy
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+
+	request_body {
+		max_size 200MB
+	}
+
+	# flush_interval -1 keeps the live job stream (SSE) unbuffered.
+	reverse_proxy factory:8787 {
+		flush_interval -1
+	}
+}

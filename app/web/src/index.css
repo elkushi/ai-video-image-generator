@@ -1,0 +1,168 @@
+@import 'tailwindcss';
+
+/* Fonts come from the factory's own offline copies (served by the backend at /files/assets/fonts). */
+@font-face { font-family: 'Inter'; font-weight: 400; src: url('/files/assets/fonts/Inter-400.ttf'); font-display: swap; }
+@font-face { font-family: 'Inter'; font-weight: 500; src: url('/files/assets/fonts/Inter-500.ttf'); font-display: swap; }
+@font-face { font-family: 'Inter'; font-weight: 600; src: url('/files/assets/fonts/Inter-600.ttf'); font-display: swap; }
+@font-face { font-family: 'Inter'; font-weight: 700; src: url('/files/assets/fonts/Inter-700.ttf'); font-display: swap; }
+@font-face { font-family: 'Inter'; font-weight: 800; src: url('/files/assets/fonts/Inter-800.ttf'); font-display: swap; }
+@font-face { font-family: 'Cairo'; font-weight: 400; src: url('/files/assets/fonts/Cairo-400.ttf'); font-display: swap; }
+@font-face { font-family: 'Cairo'; font-weight: 700; src: url('/files/assets/fonts/Cairo-700.ttf'); font-display: swap; }
+
+@theme {
+	--font-sans: 'Inter', 'Cairo', ui-sans-serif, system-ui, sans-serif;
+	--color-ink-950: #07090f;
+	--color-ink-900: #0c1019;
+	--color-ink-850: #111624;
+	--color-ink-800: #161c2d;
+	--color-ink-700: #212a40;
+	--color-ink-600: #2e3956;
+	--color-ink-400: #7d89a8;
+	--color-ink-300: #a8b2cc;
+	--color-ink-100: #e8ecf6;
+	--color-amber: #f5b942;
+	--color-amber-soft: #f5b94222;
+	--color-teal: #34d3b4;
+	--color-teal-soft: #34d3b422;
+	--color-violet: #9b7bff;
+	--color-rose: #ff6b81;
+	--color-sky: #5cb8ff;
+}
+
+html,
+body,
+#root {
+	height: 100%;
+}
+body {
+	background: var(--color-ink-950);
+	color: var(--color-ink-100);
+	font-family: var(--font-sans);
+	-webkit-font-smoothing: antialiased;
+}
+[dir='rtl'],
+:lang(ar) {
+	font-family: 'Cairo', 'Inter', sans-serif;
+}
+
+.panel {
+	background: linear-gradient(180deg, var(--color-ink-850), var(--color-ink-900));
+	border: 1px solid var(--color-ink-700);
+	border-radius: 18px;
+}
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	border-radius: 999px;
+	padding: 4px 12px;
+	font-size: 13px;
+	border: 1px solid var(--color-ink-600);
+	color: var(--color-ink-300);
+	transition: all 0.15s;
+	cursor: pointer;
+	user-select: none;
+}
+.chip:hover {
+	border-color: var(--color-ink-400);
+	color: var(--color-ink-100);
+}
+.chip[data-on='true'] {
+	background: var(--color-amber-soft);
+	border-color: var(--color-amber);
+	color: var(--color-amber);
+}
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	border-radius: 12px;
+	padding: 10px 18px;
+	font-weight: 600;
+	font-size: 14px;
+	transition: all 0.15s;
+}
+.btn-primary {
+	background: var(--color-amber);
+	color: #1b1406;
+}
+.btn-primary:hover {
+	filter: brightness(1.08);
+	box-shadow: 0 0 0 4px #f5b94233;
+}
+.btn-primary:disabled {
+	opacity: 0.45;
+	box-shadow: none;
+	cursor: not-allowed;
+}
+.btn-ghost {
+	border: 1px solid var(--color-ink-600);
+	color: var(--color-ink-300);
+}
+.btn-ghost:hover {
+	border-color: var(--color-ink-400);
+	color: var(--color-ink-100);
+}
+.field {
+	width: 100%;
+	background: var(--color-ink-950);
+	border: 1px solid var(--color-ink-700);
+	border-radius: 12px;
+	padding: 10px 14px;
+	color: var(--color-ink-100);
+	outline: none;
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field:focus {
+	border-color: var(--color-amber);
+	box-shadow: 0 0 0 3px #f5b94222;
+}
+.label {
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-ink-400);
+}
+.scroll-thin::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+	background: var(--color-ink-700);
+	border-radius: 8px;
+}
+
+/* conveyor belt stripes */
+@keyframes belt {
+	to {
+		background-position: -40px 0;
+	}
+}
+.belt-moving {
+	animation: belt 0.9s linear infinite;
+}
+@keyframes shimmer {
+	0% {
+		background-position: -200% 0;
+	}
+	100% {
+		background-position: 200% 0;
+	}
+}
+.shimmer {
+	background: linear-gradient(90deg, transparent, #ffffff14, transparent);
+	background-size: 200% 100%;
+	animation: shimmer 1.6s infinite;
+}
+
+/* React Flow dark tweaks */
+.react-flow__attribution {
+	display: none;
+}
+.react-flow__controls button {
+	background: var(--color-ink-800);
+	border-color: var(--color-ink-700);
+	fill: var(--color-ink-300);
+}

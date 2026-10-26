@@ -1,0 +1,76 @@
+# Video & post factory. Portable: any Docker host (VPS, home server, cloud VM) or a laptop.
+#
+# Laptop / private:  docker compose up -d                 -> http://127.0.0.1:8787 (this machine only)
+#   files on the host instead of volumes: add -f docker-compose.local.yml (see that file)
+# Invite-only beta:  docker compose --profile public up -d
+#   HTTPS + per-invitee basic auth via Caddy; set FACTORY_DOMAIN in .env and create
+#   deploy/users.caddy (make invite NAME=name). The app has no accounts of its own, so port 8787
+#   is never published on 0.0.0.0; everything public goes through the proxy.
+#
+# Claude auth, no API key needed (each deployment uses its own Claude subscription):
+#   a) on any machine with a browser: `claude setup-token`, then CLAUDE_CODE_OAUTH_TOKEN=... in .env
+#   b) or once: docker compose exec -it factory claude auth login   (kept in the claude-config volume)
+# ANTHROPIC_API_KEY in .env is an optional, billed alternative (it takes precedence when set).
+#
+# Local models (Piper voices, SD, Real-ESRGAN, ~2 GB) download once:
+#   docker compose exec factory python tools/setup_local_models.py
+
+services:
+  factory:
+    build:
+      context: .
+      args:
+        APP_UID: ${APP_UID:-10001}
+        APP_GID: ${APP_GID:-10001}
+    image: video-factory:latest
+    restart: unless-stopped
+    init: true
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      FACTORY_HOST: 0.0.0.0
+      FACTORY_PORT: 8787
+      CLAUDE_CONFIG_DIR: /home/factory/.claude
+    ports:
+      - "127.0.0.1:${FACTORY_LOCAL_PORT:-8787}:8787"
+    volumes:
+      - brands:/app/brands
+      - output:/app/output
+      - factory-tmp:/app/.tmp
+      - music:/app/assets/music
+      - claude-config:/home/factory/.claude
+    shm_size: "2gb"          # headless Chrome (Remotion, HyperFrames) needs more than the 64 MB default
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8787/api/system"]
+      interval: 30s
+      timeout: 20s
+      start_period: 40s
+      retries: 3
+
+  caddy:
+    image: caddy:2.8.4
+    profiles: ["public"]
+    restart: unless-stopped
+    depends_on:
+      factory:
+        condition: service_healthy
+    environment:
+      FACTORY_DOMAIN: ${FACTORY_DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./deploy/users.caddy:/etc/caddy/users.caddy:ro   # invitees; missing file = Caddy won't start (fail closed)
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  brands:
+  output:
+  factory-tmp:
+  music:
+  claude-config:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,10 @@
+# Laptop mode: keep brands, deliverables and music as normal folders in this repo instead of Docker volumes.
+#   APP_UID=$(id -u) APP_GID=$(id -g) docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+# (or `make up-local`). Building with your own uid/gid keeps the bind-mounted folders writable.
+# .tmp (jobs, run folders, ~2 GB of local models) and the Claude login stay in volumes.
+services:
+  factory:
+    volumes:
+      - ./brands:/app/brands
+      - ./output:/app/output
+      - ./assets/music:/app/assets/music

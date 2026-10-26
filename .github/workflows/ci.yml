@@ -1,0 +1,141 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      smoke:
+        description: "Also run the end-to-end smoke test (downloads ~2 GB of local models)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.14"
+  NODE_VERSION: "24"
+
+jobs:
+  web:
+    name: Web UI typecheck + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: app/web/package-lock.json
+      - run: npm ci --no-audit --no-fund
+        working-directory: app/web
+      - run: npm run build   # tsc --noEmit && vite build
+        working-directory: app/web
+
+  studio:
+    name: Remotion studio typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: studio/package-lock.json
+      - run: npm ci --no-audit --no-fund
+        working-directory: studio
+      - run: npm run typecheck
+        working-directory: studio
+
+  python:
+    name: Python tools + backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt pytest httpx
+      - name: Byte-compile tools and backend
+        run: .venv/bin/python -m compileall -q tools app/server
+      - name: Backend imports
+        run: .venv/bin/python -c "import sys; sys.path.insert(0, 'app/server'); import main"
+      - name: Validate a sample post spec (demo demo brand)
+        run: |
+          mkdir -p .tmp/ci
+          cat > .tmp/ci/post.json <<'EOF'
+          {"brand": "demo", "topic": "CI sample", "language": "en", "aspect": "4x5", "platforms": ["linkedin"],
+           "variants": [
+            {"id": "A", "angle": "Title card", "format": "single", "copy": {"linkedin": "A short post.", "alt": "A title card."},
+             "slides": [{"layout": "title", "props": {"title": "Short stories, made with free AI"}}]},
+            {"id": "B", "angle": "Quote card", "format": "single", "copy": {"linkedin": "Another post.", "alt": "A quote card."},
+             "slides": [{"layout": "quote", "props": {"quote": "Every story starts with one scene."}}]},
+            {"id": "C", "angle": "Call to action", "format": "single", "copy": {"linkedin": "A third post.", "alt": "A call to action."},
+             "slides": [{"layout": "cta", "props": {"headline": "Follow Margin Notes"}}]}]}
+          EOF
+          .venv/bin/python tools/validate_post.py .tmp/ci/post.json
+      - name: Backend tests
+        if: hashFiles('app/server/tests/**') != ''
+        run: .venv/bin/python -m pytest -q app/server/tests
+
+  docker:
+    name: Docker image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: video-factory:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  smoke:
+    name: End-to-end smoke test (manual)
+    if: github.event_name == 'workflow_dispatch' && inputs.smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: System packages
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-core libvulkan1 mesa-vulkan-drivers
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -r requirements.txt
+          (cd studio && npm ci --no-audit --no-fund && npx remotion browser ensure)
+          (cd hyperframes && npm ci --no-audit --no-fund && npx hyperframes telemetry disable || true)
+      - name: Cache local models
+        uses: actions/cache@v4
+        with:
+          path: .tmp/models
+          key: local-models-${{ hashFiles('tools/setup_local_models.py') }}
+      - name: Local models
+        run: .venv/bin/python tools/setup_local_models.py
+      - name: Smoke test
+        env:
+          HYPERFRAMES_BROWSER_PATH: /usr/bin/google-chrome
+          DO_NOT_TRACK: "1"
+        run: .venv/bin/python tools/smoke_test.py --quick

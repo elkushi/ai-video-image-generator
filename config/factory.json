@@ -1,0 +1,183 @@
+{
+  "_note": "Factory-wide defaults. Brand kits (brands/<slug>/brand.json) override voices, colours and fonts. Everything here is free; never add a paid provider.",
+  "fps": 30,
+  "aspects": {
+    "9x16": {
+      "width": 1080,
+      "height": 1920,
+      "composition": "Video-9x16",
+      "platforms": [
+        "instagram_reels",
+        "tiktok",
+        "linkedin_mobile",
+        "youtube_shorts"
+      ]
+    },
+    "1x1": {
+      "width": 1080,
+      "height": 1080,
+      "composition": "Video-1x1",
+      "platforms": [
+        "linkedin_feed",
+        "instagram_feed"
+      ]
+    },
+    "4x5": {
+      "width": 1080,
+      "height": 1350,
+      "composition": "Video-4x5",
+      "platforms": [
+        "instagram_feed",
+        "linkedin_feed"
+      ]
+    },
+    "16x9": {
+      "width": 1920,
+      "height": 1080,
+      "composition": "Video-16x9",
+      "platforms": [
+        "linkedin_desktop",
+        "youtube",
+        "website"
+      ]
+    }
+  },
+  "languages": {
+    "en": {
+      "dir": "ltr",
+      "voices": [
+        "en-US-AndrewNeural",
+        "en-US-AvaNeural",
+        "en-GB-RyanNeural",
+        "en-US-EmmaNeural"
+      ],
+      "max_wps": 2.9,
+      "piper": "en_US-lessac-medium",
+      "typical_wps": 2.3
+    },
+    "ar": {
+      "dir": "rtl",
+      "voices": [
+        "ar-EG-SalmaNeural",
+        "ar-EG-ShakirNeural",
+        "ar-SA-HamedNeural",
+        "ar-SA-ZariyahNeural"
+      ],
+      "max_wps": 1.9,
+      "piper": "ar_JO-kareem-medium",
+      "typical_wps": 1.35,
+      "_pace_note": "Measured 2026-10-21: ar-EG-ShakirNeural reads ~1.3 words/s at +0%; each '…' adds ~0.6 s. Use voice_rate +8..+12% for snappier Reels."
+    },
+    "ru": {
+      "dir": "ltr",
+      "voices": [
+        "ru-RU-DmitryNeural",
+        "ru-RU-SvetlanaNeural"
+      ],
+      "max_wps": 2.4,
+      "piper": "ru_RU-dmitri-medium",
+      "typical_wps": 2.0,
+      "piper_female": "ru_RU-irina-medium"
+    }
+  },
+  "voice_rate": "+4%",
+  "scene_pause": 0.25,
+  "silent_scene_seconds": 2.0,
+  "transition_frames": 10,
+  "music": {
+    "under_voice": 0.1,
+    "no_voice": 0.32,
+    "fade_seconds": 1.2
+  },
+  "loudness_lufs": -14,
+  "render": {
+    "concurrency": 2,
+    "preview_scale": 0.5,
+    "crf": 18
+  },
+  "ai_image": {
+    "pollinations_url": "https://image.pollinations.ai/prompt/{prompt}",
+    "pollinations_model": "flux",
+    "hf_spaces": [
+      "black-forest-labs/FLUX.1-schnell"
+    ],
+    "order": [
+      "flux",
+      "local",
+      "pollinations"
+    ]
+  },
+  "ai_clip": {
+    "hf_spaces": [
+      "zerogpu-aoti/wan2-2-fp8da-aoti-faster",
+      "Lightricks/ltx-video-distilled"
+    ],
+    "seconds": 4
+  },
+  "avatar": {
+    "hf_spaces": [
+      "multimodalart/MoDA-fast-talking-head",
+      "fffiloni/EchoMimic"
+    ]
+  },
+  "music_gen": {
+    "hf_spaces": [
+      "facebook/MusicGen"
+    ]
+  },
+  "local": {
+    "vulkan_gpu": 1,
+    "_vulkan_note": "Vulkan device index of the NVIDIA MX350 (0 = Intel iGPU, 3x slower). Check with: vulkaninfo --summary",
+    "sd_model": "sd/DreamShaper8_LCM_q8_0.gguf",
+    "sd_steps": 6,
+    "sd_cfg": 1.6,
+    "sd_base": 512,
+    "upscale_model": "realesr-animevideov3",
+    "sd_backend": "cpu",
+    "_sd_bench": "2026-10-21, 384x672, 6 LCM steps, TAESD, under heavy swap: cpu 540 s, vulkan1 (MX350) 652 s. Free RAM first (close browser/IDE) for ~2x."
+  },
+  "ellipsis_pause": 0.6,
+  "qa": {
+    "asr_model": "small",
+    "vo_match_min": {
+      "en": 0.75,
+      "ru": 0.7,
+      "ar": 0.6
+    },
+    "_note": "qa_frames.py transcribes the rendered voice with faster-whisper small (local); vo_match = share of script words heard (digit groups count for spelled-out numbers). Measured 2026-10-21: EN 94-100%, RU ~95%, AR ~92% on clean edge-tts voices."
+  },
+  "female_voices": [
+    "AvaNeural",
+    "EmmaNeural",
+    "SalmaNeural",
+    "ZariyahNeural",
+    "SvetlanaNeural",
+    "JennyNeural",
+    "AriaNeural",
+    "DariyaNeural"
+  ],
+  "mixed_voice": {
+    "foreign_rate_delta": -8,
+    "gap_seconds": 0.14,
+    "keep_words": [
+      "SMS",
+      "API",
+      "OTP",
+      "WhatsApp",
+      "Telegram",
+      "Viber",
+      "Instagram",
+      "LinkedIn",
+      "TikTok",
+      "YouTube",
+      "Google",
+      "iPhone",
+      "Android",
+      "Wi-Fi",
+      "email",
+      "online",
+      "Reels"
+    ],
+    "_note": "make_voiceover.py voices each language run natively (same gender). Latin words in keep_words, the brand name and short ALL-CAPS acronyms stay in the main voice inside non-Latin lines."
+  }
+}

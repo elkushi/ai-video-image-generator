@@ -1,0 +1,98 @@
+{
+  "type": "object",
+  "properties": {
+    "understood": {
+      "type": "string"
+    },
+    "defaults": {
+      "type": "object",
+      "properties": {
+        "goal": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "platforms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "aspects": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "language": {
+          "type": "string"
+        },
+        "length_s": {
+          "type": "number"
+        },
+        "aspect": {
+          "type": "string",
+          "enum": [
+            "4x5",
+            "1x1",
+            "9x16",
+            "16x9"
+          ]
+        },
+        "post_format": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "single",
+            "carousel"
+          ]
+        }
+      }
+    },
+    "questions": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string"
+          },
+          "header": {
+            "type": "string"
+          },
+          "multiSelect": {
+            "type": "boolean"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label"
+              ]
+            }
+          }
+        },
+        "required": [
+          "question",
+          "header",
+          "options"
+        ]
+      }
+    }
+  },
+  "required": [
+    "understood",
+    "questions"
+  ]
+}

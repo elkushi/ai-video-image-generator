@@ -1,0 +1,333 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Video storyboard",
+  "description": "Written by the video-scriptwriter agent. One file = one video in one language. Tools fill in visual.resolved; never hand-write it.",
+  "type": "object",
+  "required": [
+    "title",
+    "brand",
+    "language",
+    "goal",
+    "aspects",
+    "scenes"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 3
+    },
+    "brand": {
+      "type": "string",
+      "description": "Folder name under brands/"
+    },
+    "language": {
+      "enum": [
+        "en",
+        "ar",
+        "ru"
+      ]
+    },
+    "goal": {
+      "enum": [
+        "promo",
+        "educational",
+        "event",
+        "story",
+        "announcement",
+        "tutorial"
+      ]
+    },
+    "format": {
+      "type": "string",
+      "description": "Format name from workflows/video_playbook.md"
+    },
+    "aspects": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "9x16",
+          "1x1",
+          "4x5",
+          "16x9"
+        ]
+      }
+    },
+    "voice": {
+      "type": "string",
+      "description": "edge-tts voice name; default from brand.json or config"
+    },
+    "voice_rate": {
+      "type": "string",
+      "pattern": "^[+-][0-9]{1,2}%$"
+    },
+    "theme": {
+      "enum": [
+        "dark",
+        "light",
+        "brand"
+      ],
+      "default": "dark"
+    },
+    "captions": {
+      "type": "boolean",
+      "default": true
+    },
+    "caption_style": {
+      "enum": [
+        "highlight",
+        "pop",
+        "minimal"
+      ],
+      "default": "highlight"
+    },
+    "music_mood": {
+      "enum": [
+        "none",
+        "upbeat",
+        "corporate",
+        "inspiring",
+        "calm",
+        "dramatic",
+        "playful",
+        "tech"
+      ]
+    },
+    "progress_bar": {
+      "type": "boolean",
+      "default": true
+    },
+    "watermark_logo": {
+      "type": "boolean",
+      "default": true
+    },
+    "scenes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 24,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "type"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "type": {
+            "enum": [
+              "KineticTitle",
+              "LogoReveal",
+              "ProductHero",
+              "ScreenDemo",
+              "FeatureList",
+              "StatCounter",
+              "BeforeAfter",
+              "Quote",
+              "EventCard",
+              "StockBroll",
+              "StoryShot",
+              "Presenter",
+              "CTAEndCard"
+            ]
+          },
+          "vo": {
+            "type": "string",
+            "description": "Exact words spoken during this scene. Empty = silent scene."
+          },
+          "min_seconds": {
+            "type": "number",
+            "minimum": 0.5,
+            "maximum": 20
+          },
+          "transition": {
+            "enum": [
+              "checkerboard",
+              "clock-wipe",
+              "fade",
+              "glitch",
+              "light-leak",
+              "none",
+              "pixelate",
+              "rgb-split",
+              "slide",
+              "wipe",
+              "zoom",
+              "zoom-blur"
+            ]
+          },
+          "props": {
+            "type": "object"
+          },
+          "visual": {
+            "type": "object",
+            "required": [
+              "source"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "source": {
+                "enum": [
+                  "none",
+                  "file",
+                  "stock_video",
+                  "stock_photo",
+                  "ai_image",
+                  "ai_clip",
+                  "screenshot",
+                  "avatar",
+                  "mascot"
+                ]
+              },
+              "path": {
+                "type": "string",
+                "description": "file/screenshot: path relative to the brand folder or absolute"
+              },
+              "query": {
+                "type": "string",
+                "description": "stock_*: 2-4 English search words"
+              },
+              "prompt": {
+                "type": "string",
+                "description": "ai_image/ai_clip/avatar: visual description (English)"
+              },
+              "seed": {
+                "type": "integer"
+              },
+              "motion": {
+                "enum": [
+                  "zoom_in",
+                  "zoom_out",
+                  "pan_left",
+                  "pan_right",
+                  "pan_up",
+                  "pan_down",
+                  "static"
+                ]
+              },
+              "resolved": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Filled by tools: path inside the run's public/ dir"
+              },
+              "kind": {
+                "enum": [
+                  "image",
+                  "video",
+                  "none"
+                ]
+              },
+              "fallback_used": {
+                "type": "string"
+              },
+              "still": {
+                "type": "string",
+                "description": "Filled by gen_image.py: still used to make ai_clip/avatar video"
+              },
+              "ref": {
+                "type": "string",
+                "description": "local provider img2img reference (path relative to brand folder), e.g. assets/characters/hero.png"
+              },
+              "strength": {
+                "type": "number",
+                "minimum": 0.2,
+                "maximum": 0.95,
+                "description": "img2img strength: lower keeps more of the reference"
+              }
+            }
+          },
+          "sfx": {
+            "type": "string",
+            "description": "optional sfx tag at scene start (whoosh, pop, impact, riser, tick, chime) or 'none'"
+          },
+          "lottie": {
+            "type": "object",
+            "description": "Lottie sticker over the scene: src is relative to brands/<slug>/ (e.g. assets/lottie/check.json)",
+            "properties": {
+              "src": {
+                "type": "string"
+              },
+              "position": {
+                "enum": [
+                  "center",
+                  "top",
+                  "bottom",
+                  "top-right",
+                  "top-left",
+                  "bottom-right",
+                  "bottom-left"
+                ]
+              },
+              "size": {
+                "type": "number",
+                "minimum": 5,
+                "maximum": 100
+              },
+              "loop": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "src"
+            ]
+          }
+        }
+      }
+    },
+    "image_provider": {
+      "enum": [
+        "flux",
+        "local",
+        "pollinations"
+      ],
+      "description": "Force one image provider for the whole video (consistent look). 'local' = unlimited, offline."
+    },
+    "sfx": {
+      "type": "boolean",
+      "default": true,
+      "description": "Auto sound effects (whoosh on transitions, pop on list items, ticks on counters)"
+    },
+    "look": {
+      "type": "object",
+      "description": "Finishing layers. Default: story goal gets grain 0.05 + vignette 0.35, others none.",
+      "properties": {
+        "grain": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.3
+        },
+        "vignette": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.9
+        }
+      }
+    },
+    "piper_voice": {
+      "type": "string",
+      "description": "Offline Piper voice for the fallback, e.g. ru_RU-irina-medium. Default: matches the edge voice's gender."
+    },
+    "mixed_voices": {
+      "enum": [
+        "auto",
+        "marked",
+        "off"
+      ],
+      "description": "auto (default): words in another script are voiced by a native voice of that language; marked: only [[en:...]]/[[ru:...]]/[[ar:...]] markup switches; off: one voice reads everything"
+    },
+    "voices": {
+      "type": "object",
+      "description": "voice per language for mixed lines, e.g. {\"en\": \"en-US-AvaNeural\"}; default = same gender as the main voice",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}

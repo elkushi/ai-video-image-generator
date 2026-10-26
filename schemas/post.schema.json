@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Social post spec (3 variants) rendered by HyperFrames",
+  "type": "object",
+  "required": ["brand", "topic", "language", "aspect", "platforms", "variants"],
+  "additionalProperties": true,
+  "properties": {
+    "brand": {"type": "string"},
+    "topic": {"type": "string"},
+    "goal": {"type": "string"},
+    "language": {"enum": ["en", "ar", "ru"]},
+    "aspect": {"enum": ["4x5", "1x1", "9x16", "16x9"]},
+    "platforms": {"type": "array", "minItems": 1, "items": {"enum": ["linkedin", "instagram", "facebook", "x", "tiktok"]}},
+    "posting_time": {"type": "string"},
+    "facts": {"type": "array", "items": {"type": "string"}},
+    "picked": {"type": "string"},
+    "variants": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["id", "angle", "format", "copy", "slides"],
+        "additionalProperties": true,
+        "properties": {
+          "id": {"enum": ["A", "B", "C"]},
+          "angle": {"type": "string"},
+          "why": {"type": "string"},
+          "format": {"enum": ["single", "carousel"]},
+          "theme": {"enum": ["dark", "light", "brand"]},
+          "copy": {
+            "type": "object",
+            "required": ["alt"],
+            "properties": {
+              "linkedin": {"type": "string"},
+              "instagram": {"type": "string"},
+              "facebook": {"type": "string"},
+              "x": {"type": "string"},
+              "tiktok": {"type": "string"},
+              "hashtags": {"type": "array", "items": {"type": "string"}},
+              "alt": {"type": "string"}
+            }
+          },
+          "slides": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 10,
+            "items": {
+              "type": "object",
+              "required": ["layout", "props"],
+              "properties": {
+                "layout": {"enum": ["title", "stat", "quote", "list", "compare", "icons", "photo", "screen", "cta", "custom"]},
+                "theme": {"enum": ["dark", "light", "brand"]},
+                "props": {"type": "object"}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

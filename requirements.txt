@@ -1,0 +1,15 @@
+python-dotenv
+requests
+edge-tts
+gradio_client
+faster-whisper
+pillow
+jsonschema
+playwright
+piper-tts
+numpy
+onnxruntime
+rembg[cpu]
+fastapi
+uvicorn[standard]
+python-multipart

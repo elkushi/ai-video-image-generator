@@ -1,0 +1,76 @@
+{
+  "title": "Sample",
+  "language": "en",
+  "dir": "ltr",
+  "theme": "dark",
+  "brand": {
+    "name": "Margin Notes",
+    "tagline": "Every message delivered. Every channel, one platform.",
+    "website": "example.com",
+    "handle": "@marginnotes",
+    "colors": {
+      "primary": "#4072D6",
+      "secondary": "#0E47BA",
+      "dark": "#15213F",
+      "light": "#EEF3FC",
+      "accent": "#6B96E8",
+      "text_on_dark": "#FFFFFF",
+      "text_on_light": "#15213F",
+      "muted": "#7787A3",
+      "success": "#27AE60",
+      "danger": "#EB5757"
+    },
+    "fonts": {
+      "heading": {
+        "family": "Manrope"
+      },
+      "body": {
+        "family": "Manrope"
+      }
+    },
+    "logo": {},
+    "radius": 28,
+    "motif": "tilted_squares"
+  },
+  "brandBase": "brand/",
+  "scenes": [
+    {
+      "id": "s1",
+      "type": "KineticTitle",
+      "from": 0,
+      "duration": 90,
+      "props": {
+        "kicker": "Sample",
+        "title": "Run tools/build_props.py to preview a real run",
+        "subtitle": "Open the studio with the run's public dir"
+      },
+      "visual": {
+        "source": "none"
+      }
+    },
+    {
+      "id": "s2",
+      "type": "CTAEndCard",
+      "from": 90,
+      "duration": 90,
+      "props": {
+        "headline": "Your call to action",
+        "button": "Learn more"
+      },
+      "visual": {
+        "source": "none"
+      }
+    }
+  ],
+  "totalFrames": 180,
+  "transitionFrames": 10,
+  "voice": null,
+  "music": null,
+  "voiceRanges": [],
+  "captions": [],
+  "showCaptions": true,
+  "captionStyle": "highlight",
+  "progressBar": true,
+  "watermarkLogo": true,
+  "voiceLevels": []
+}

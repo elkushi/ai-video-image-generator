@@ -1,0 +1,57 @@
+{
+  "_source": "Fictional demo kit for test videos. Not a real company or product.",
+  "name": "Margin Notes",
+  "slug": "demo",
+  "tagline": "Small ideas, written down",
+  "website": "",
+  "handle": "",
+  "colors": {
+    "primary": "#2F5D50",
+    "secondary": "#1F3F36",
+    "dark": "#0F0F1A",
+    "light": "#F6F3EC",
+    "accent": "#E0A43B",
+    "text_on_dark": "#FFFFFF",
+    "text_on_light": "#0F0F1A",
+    "muted": "#8A8D99"
+  },
+  "fonts": {
+    "heading": {
+      "family": "Inter",
+      "files": {}
+    },
+    "body": {
+      "family": "Inter",
+      "files": {}
+    }
+  },
+  "logo": {
+    "on_light": "logo/monogram-ink.svg",
+    "on_dark": "logo/monogram-white.svg"
+  },
+  "radius": 20,
+  "motif": "none",
+  "theme_default": "dark",
+  "image_style": "clean editorial photography, paper and desk objects, soft daylight, muted colours, no text, no logos",
+  "voices": {
+    "en": "en-US-AndrewNeural",
+    "ar": "ar-SA-HamedNeural",
+    "ru": "ru-RU-DmitryNeural"
+  },
+  "voice_rate": "+0%",
+  "music_moods": [
+    "calm",
+    "inspiring"
+  ],
+  "seed": 11,
+  "rules": {
+    "do": [
+      "Plain, specific language",
+      "One idea per scene"
+    ],
+    "dont": [
+      "Invented statistics, clients or quotes",
+      "Real people's likeness"
+    ]
+  }
+}

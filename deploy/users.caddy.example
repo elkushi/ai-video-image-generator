@@ -1,0 +1,4 @@
+# Copy to deploy/users.caddy (gitignored). One invitee per line: <name> <bcrypt hash>.
+# Make a line with:  make invite NAME=alice
+# Remove a line and run `make reload-proxy` to revoke access.
+# alice $2a$14$replace-with-a-real-hash-from-caddy-hash-password

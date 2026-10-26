@@ -1,0 +1,43 @@
+# Secrets
+.env
+credentials.json
+token.json
+
+# Disposable intermediates
+.tmp/*
+!.tmp/.gitkeep
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Video factory
+output/*
+!output/.gitkeep
+studio/node_modules/
+studio/out/
+assets/music/*.mp3
+assets/music/*.wav
+assets/music/*.m4a
+.tmp/models/
+assets/sfx/*.wav
+.tmp/bench/
+
+# Client brand kits stay local (licensed fonts, internal profiles).
+# Only the template and the neutral demo brand are public.
+brands/*
+!brands/_template/
+!brands/demo/
+.claude/settings.local.json
+.vscode/
+.DS_Store
+
+# Factory app
+app/web/node_modules/
+app/web/dist/
+.tmp/app/
+
+# HyperFrames (post designs)
+hyperframes/node_modules/
+hyperframes/.hyperframes/

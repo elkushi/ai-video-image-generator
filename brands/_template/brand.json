@@ -1,0 +1,53 @@
+{
+  "_source": "Template: copy via tools/extract_brand.py, then edit.",
+  "name": "Brand",
+  "slug": "brand",
+  "tagline": "",
+  "website": "",
+  "handle": "",
+  "colors": {
+    "primary": "#3366FF",
+    "secondary": "#1D3FBF",
+    "dark": "#111827",
+    "light": "#F4F6FB",
+    "accent": "#7AA2FF",
+    "text_on_dark": "#FFFFFF",
+    "text_on_light": "#111827",
+    "muted": "#7A8499"
+  },
+  "fonts": {
+    "heading": {
+      "family": "Inter",
+      "files": {}
+    },
+    "body": {
+      "family": "Inter",
+      "files": {}
+    }
+  },
+  "logo": {
+    "on_light": "logo/logo.png",
+    "on_dark": "logo/logo-white.png"
+  },
+  "radius": 24,
+  "motif": "tilted_squares",
+  "theme_default": "dark",
+  "image_style": "clean modern photography, soft natural light, minimal composition, no text, no logos",
+  "voices": {
+    "en": "en-US-AndrewNeural",
+    "ar": "ar-EG-ShakirNeural",
+    "ru": "ru-RU-DmitryNeural"
+  },
+  "voice_rate": "+4%",
+  "music_moods": [
+    "corporate",
+    "upbeat"
+  ],
+  "seed": 7,
+  "rules": {
+    "do": [],
+    "dont": [
+      "Invent numbers, clients or quotes"
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "properties": {
+    "rationale": {"type": "string"},
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string"}, "date": {"type": "string"}, "time": {"type": "string"},
+          "goal": {"type": "string"}, "format": {"type": "string"}, "topic": {"type": "string"},
+          "hook": {"type": "string"}, "facts": {"type": "array", "items": {"type": "string"}},
+          "languages": {"type": "array", "items": {"type": "string"}},
+          "aspects": {"type": "array", "items": {"type": "string"}},
+          "style": {"type": "string"}, "length_s": {"type": "number"}, "cta": {"type": "string"}
+        },
+        "required": ["id", "date", "goal", "format", "topic", "hook", "languages", "aspects"]
+      }
+    },
+    "questions": {"type": "array", "items": {"type": "string"}}
+  },
+  "required": ["rationale", "items"]
+}

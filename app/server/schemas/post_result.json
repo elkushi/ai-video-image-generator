@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "required": ["run", "summary", "variants"],
+  "properties": {
+    "run": {"type": "string", "description": ".tmp/posts/<name>"},
+    "summary": {"type": "string"},
+    "variants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "angle"],
+        "properties": {"id": {"type": "string"}, "angle": {"type": "string"}, "why": {"type": "string"}}
+      }
+    }
+  }
+}
