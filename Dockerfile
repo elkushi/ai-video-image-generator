@@ -73,7 +73,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ffmpeg chromium \
         fonts-noto-core fonts-dejavu-core fonts-liberation fonts-noto-color-emoji \
         libvulkan1 mesa-vulkan-drivers \
-        poppler-utils imagemagick git curl ca-certificates psmisc tini \
+        poppler-utils imagemagick git curl ca-certificates psmisc tini passwd \
     && rm -rf /var/lib/apt/lists/*
 
 # Node runtime from the official image

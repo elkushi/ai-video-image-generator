@@ -72,7 +72,7 @@ jobs:
         run: .venv/bin/python -m compileall -q tools app/server
       - name: Backend imports
         run: .venv/bin/python -c "import sys; sys.path.insert(0, 'app/server'); import main"
-      - name: Validate a sample post spec (demo demo brand)
+      - name: Validate a sample post spec (demo brand)
         run: |
           mkdir -p .tmp/ci
           cat > .tmp/ci/post.json <<'EOF'

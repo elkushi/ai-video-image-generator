@@ -40,6 +40,15 @@ from stream_parser import StreamParser  # noqa: E402
 
 FIXTURE = "2026-10-26_demo_otp-uptime-post"
 TEMP = "2026-10-26_demo_r1-backend-test-post"
+
+# Some tests need a rendered post that only exists on the author's machine (not in git).
+LOCAL_ONLY = not (POSTS / FIXTURE / "previews").is_dir()
+try:
+    import pytest
+    local_only = pytest.mark.skipif(LOCAL_ONLY, reason="needs the local fixture post (not in git)")
+except ImportError:
+    def local_only(f):
+        return f
 client = TestClient(main.app)
 
 
@@ -54,6 +63,7 @@ def teardown_temp():
             shutil.rmtree(d)
 
 
+@local_only
 def test_get_post():
     r = client.get(f"/api/posts/{FIXTURE}")
     assert r.status_code == 200, r.text
@@ -70,6 +80,7 @@ def test_get_post():
     assert client.get("/api/posts/%2e%2e").status_code in (400, 404)
 
 
+@local_only
 def test_pick_and_busy():
     setup_temp()
     try:
@@ -104,6 +115,7 @@ def test_pick_and_busy():
         teardown_temp()
 
 
+@local_only
 def test_revise():
     assert client.post(f"/api/posts/{FIXTURE}/revise", json={"feedback": "  "}).status_code == 400
     assert client.post(f"/api/posts/{FIXTURE}/revise", json={"feedback": "x", "variants": ["Q"]}).status_code == 400
@@ -142,7 +154,7 @@ def test_brands():
     assert FAKE.submitted[-1].brand.startswith("brand-") and FAKE.submitted[-1].kind == "onboard"
     r = client.post("/api/brands", json={"name": "Новая Школа"})
     assert FAKE.submitted[-1].brand == "novaya-shkola"
-    assert client.post("/api/brands", json={"name": "Margin Notes"}).status_code == 409
+    assert client.post("/api/brands", json={"name": "demo"}).status_code == 409
     assert client.post("/api/brands", json={"name": "  "}).status_code == 400
     assert client.post("/api/brands", json={"name": "X", "uploads": ["/etc/hosts"]}).status_code == 400
     assert client.post("/api/brands/no-such/guide", json={"notes": "x"}).status_code == 404
@@ -150,6 +162,7 @@ def test_brands():
     assert client.post("/api/brands/demo/guide", json={"notes": "new blue"}).status_code == 200
 
 
+@local_only
 def test_files():
     assert client.get(f"/files/.tmp/posts/{FIXTURE}/previews/contact.jpg").status_code == 200
     for bad in (".env", "tools/common.py", "%2e%2e/%2e%2e/%2e%2e/etc/passwd", "output/%2e%2e/.env",
@@ -182,6 +195,7 @@ def test_stream_parser():
     assert end and end[0]["kind"] == "tool_end" and end[0]["node"] == "render"
 
 
+@local_only
 def test_result_normalize_and_timings():
     j = jobs.Job(kind="post", result={"run": str(POSTS / FIXTURE), "summary": "s", "variants": []})
     jobs.JobManager.normalize_post_result(None, j)
