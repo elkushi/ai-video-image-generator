@@ -73,7 +73,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ffmpeg chromium \
         fonts-noto-core fonts-dejavu-core fonts-liberation fonts-noto-color-emoji \
         libvulkan1 mesa-vulkan-drivers \
-        poppler-utils imagemagick git curl ca-certificates psmisc tini passwd \
+        poppler-utils imagemagick git curl ca-certificates psmisc tini \
     && rm -rf /var/lib/apt/lists/*
 
 # Node runtime from the official image
@@ -84,8 +84,8 @@ RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && npm i -g --no-audit --no-fund @anthropic-ai/claude-code \
     && npm cache clean --force
 
-RUN groupadd --gid ${APP_GID} factory \
-    && useradd --uid ${APP_UID} --gid factory --create-home --home-dir /home/factory --shell /bin/bash factory
+RUN /usr/sbin/groupadd --gid ${APP_GID} factory \
+    && /usr/sbin/useradd --uid ${APP_UID} --gid factory --create-home --home-dir /home/factory --shell /bin/bash factory
 
 WORKDIR /app
 COPY --from=pydeps --chown=factory:factory /app/.venv /app/.venv
