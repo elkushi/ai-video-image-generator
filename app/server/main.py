@@ -56,6 +56,13 @@ def check_brand(slug: str) -> None:
         raise HTTPException(404, f"no brand kit '{slug}': create it on the Brands page first")
 
 
+def check_output(name: str) -> Path:
+    """output/<name> by a plain folder name; '..' (sent as %2e%2e) would otherwise reach the repo root."""
+    if not NAME_RE.match(name) or not (OUTPUT / name).is_dir():
+        raise HTTPException(404, "no such output")
+    return OUTPUT / name
+
+
 def run_busy(name: str) -> bool:
     return any(j.status in ACTIVE and (j.run == name or (j.meta or {}).get("run") == name)
                for j in manager().jobs.values())
@@ -493,6 +500,7 @@ def get_brands():
 
 @app.get("/api/brands/{slug}")
 def get_brand(slug: str):
+    check_brand(slug)
     try:
         return library.brand_detail(slug)
     except FileNotFoundError:
@@ -506,6 +514,7 @@ def get_outputs():
 
 @app.get("/api/outputs/{name}")
 def get_output(name: str):
+    check_output(name)
     try:
         return library.output_detail(name)
     except FileNotFoundError:
@@ -514,8 +523,7 @@ def get_output(name: str):
 
 @app.post("/api/outputs/{name}/revise")
 def revise(name: str, r: Revise):
-    if not (OUTPUT / name).is_dir():
-        raise HTTPException(404, "no such output")
+    check_output(name)
     brand = name.split("_")[1] if "_" in name else ""
     prompt = (f"The user reviewed the delivered video output/{name} (run folder .tmp/videos/{name}) and asks for "
               f"changes:\n\n{r.feedback}\n\nFollow workflows/make_video.md step 8: apply the change in storyboard.json "
@@ -527,9 +535,7 @@ def revise(name: str, r: Revise):
 
 @app.post("/api/outputs/{name}/stats")
 def add_stats(name: str, s: Stats):
-    d = OUTPUT / name
-    if not d.is_dir():
-        raise HTTPException(404, "no such output")
+    d = check_output(name)
     stats = library.jload(d / "stats.json", [])
     stats.append({**s.model_dump(), "measured_at": time.strftime("%Y-%m-%dT%H:%M")})
     (d / "stats.json").write_text(json.dumps(stats, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -538,6 +544,7 @@ def add_stats(name: str, s: Stats):
 
 @app.post("/api/brands/{slug}/performance")
 def review_performance(slug: str):
+    check_brand(slug)
     prompt = (f"Follow workflows/review_performance.md for brand {slug}. The stats are already recorded in "
               f"output/*_{slug}_*/stats.json. Update brands/{slug}/performance.md (log + 'What works for this brand'), "
               "add playbook learnings only if the evidence is strong, then summarise the 2-3 takeaways.")
@@ -546,6 +553,7 @@ def review_performance(slug: str):
 
 @app.post("/api/brands/{slug}/calendar/plan")
 def plan_calendar(slug: str, r: PlanRequest):
+    check_brand(slug)
     prompt = (f"Follow workflows/content_calendar.md step 1 only, for brand {slug}: spawn the content-planner agent with "
               f"period {r.period}, {r.per_week} posts per week, platforms {r.platforms or 'brand default'}, "
               f"languages {r.languages or 'brand default'}, themes/events: {r.themes or 'none'}. "
@@ -557,9 +565,8 @@ def plan_calendar(slug: str, r: PlanRequest):
 
 @app.post("/api/brands/{slug}/calendar/approve")
 def approve_calendar(slug: str, a: Approve):
+    check_brand(slug)
     p = BRANDS / slug / "calendar.json"
-    if not (BRANDS / slug).is_dir():
-        raise HTTPException(404, "no such brand")
     cal = library.jload(p, {"brand": slug, "items": []})
     keep = {it["id"]: it for it in cal.get("items", [])}
     for it in a.items:
