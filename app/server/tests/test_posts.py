@@ -2,7 +2,8 @@
 the job manager is replaced by a fake before the app touches it (the real one would also pick up queued jobs).
 
 Run:  .venv/bin/python app/server/tests/test_posts.py      (or with pytest, if installed)
-Needs the fixture run .tmp/posts/2026-10-26_demo_otp-uptime-post with rendered previews.
+Self-contained (CI too): builds a 3-variant post run for the public demo brand with placeholder
+preview PNGs (no HyperFrames or Chrome needed) and removes it afterwards.
 """
 import json
 import shutil
@@ -12,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import jobs  # noqa: E402
+from PIL import Image  # noqa: E402
 
 
 class FakeManager:
@@ -38,18 +40,48 @@ import main  # noqa: E402
 from settings import OUTPUT, POSTS, ROOT, UPLOADS  # noqa: E402
 from stream_parser import StreamParser  # noqa: E402
 
-FIXTURE = "2026-10-26_demo_otp-uptime-post"
-TEMP = "2026-10-26_demo_r1-backend-test-post"
-
-# Some tests need a rendered post that only exists on the author's machine (not in git).
-LOCAL_ONLY = not (POSTS / FIXTURE / "previews").is_dir()
-try:
-    import pytest
-    local_only = pytest.mark.skipif(LOCAL_ONLY, reason="needs the local fixture post (not in git)")
-except ImportError:
-    def local_only(f):
-        return f
+FIXTURE = "2000-01-01_demo_backend-test-post"
+TEMP = "2000-01-01_demo_backend-test-pick"
 client = TestClient(main.app)
+
+
+def make_fixture():
+    """A post run as render_post.py leaves it: post.json, previews/<V>/slide_NN.png, index.json, events."""
+    run = POSTS / FIXTURE
+    if run.exists():
+        shutil.rmtree(run)
+    variants = [("A", "Lead with one number", "single", ["stat"]),
+                ("B", "Explain it step by step", "carousel", ["title", "list", "cta"]),
+                ("C", "One quote", "single", ["quote"])]
+    spec = {"brand": "demo", "topic": "Backend test", "language": "en", "aspect": "4x5",
+            "platforms": ["linkedin", "instagram"], "variants": []}
+    index = {}
+    for vid, angle, fmt, layouts in variants:
+        spec["variants"].append({"id": vid, "angle": angle, "format": fmt, "theme": "dark",
+                                 "copy": {"linkedin": f"Post {vid}.", "instagram": f"Post {vid}.", "alt": f"Slides of {vid}."},
+                                 "slides": [{"layout": lay, "props": {"title": lay}} for lay in layouts]})
+        (run / "previews" / vid).mkdir(parents=True)
+        slides = []
+        for i, _ in enumerate(layouts, 1):
+            f = run / "previews" / vid / f"slide_{i:02d}.png"
+            Image.new("RGB", (1080, 1350), (30, 30, 60)).save(f)
+            slides.append(f".tmp/posts/{FIXTURE}/previews/{vid}/slide_{i:02d}.png")
+        index[vid] = {"angle": angle, "format": fmt, "slides": slides}
+    Image.new("RGB", (540, 675), (30, 30, 60)).save(run / "previews/contact.jpg")
+    index["contact"] = f".tmp/posts/{FIXTURE}/previews/contact.jpg"
+    (run / "post.json").write_text(json.dumps(spec, indent=1), encoding="utf-8")
+    (run / "previews/index.json").write_text(json.dumps(index, indent=1), encoding="utf-8")
+    (run / "events.jsonl").write_text(json.dumps({"source": "tool", "kind": "stage_end", "node": "render", "run": FIXTURE,
+                                                  "data": {"ok": True, "seconds": 20.0}}) + "\n", encoding="utf-8")
+
+
+def teardown_module():
+    teardown_temp()
+    if (POSTS / FIXTURE).exists():
+        shutil.rmtree(POSTS / FIXTURE)
+
+
+make_fixture()
 
 
 def setup_temp():
@@ -63,7 +95,6 @@ def teardown_temp():
             shutil.rmtree(d)
 
 
-@local_only
 def test_get_post():
     r = client.get(f"/api/posts/{FIXTURE}")
     assert r.status_code == 200, r.text
@@ -80,7 +111,6 @@ def test_get_post():
     assert client.get("/api/posts/%2e%2e").status_code in (400, 404)
 
 
-@local_only
 def test_pick_and_busy():
     setup_temp()
     try:
@@ -115,7 +145,6 @@ def test_pick_and_busy():
         teardown_temp()
 
 
-@local_only
 def test_revise():
     assert client.post(f"/api/posts/{FIXTURE}/revise", json={"feedback": "  "}).status_code == 400
     assert client.post(f"/api/posts/{FIXTURE}/revise", json={"feedback": "x", "variants": ["Q"]}).status_code == 400
@@ -154,7 +183,7 @@ def test_brands():
     assert FAKE.submitted[-1].brand.startswith("brand-") and FAKE.submitted[-1].kind == "onboard"
     r = client.post("/api/brands", json={"name": "Новая Школа"})
     assert FAKE.submitted[-1].brand == "novaya-shkola"
-    assert client.post("/api/brands", json={"name": "demo"}).status_code == 409
+    assert client.post("/api/brands", json={"name": "Demo"}).status_code == 409
     assert client.post("/api/brands", json={"name": "  "}).status_code == 400
     assert client.post("/api/brands", json={"name": "X", "uploads": ["/etc/hosts"]}).status_code == 400
     assert client.post("/api/brands/no-such/guide", json={"notes": "x"}).status_code == 404
@@ -162,7 +191,6 @@ def test_brands():
     assert client.post("/api/brands/demo/guide", json={"notes": "new blue"}).status_code == 200
 
 
-@local_only
 def test_files():
     assert client.get(f"/files/.tmp/posts/{FIXTURE}/previews/contact.jpg").status_code == 200
     for bad in (".env", "tools/common.py", "%2e%2e/%2e%2e/%2e%2e/etc/passwd", "output/%2e%2e/.env",
@@ -195,7 +223,6 @@ def test_stream_parser():
     assert end and end[0]["kind"] == "tool_end" and end[0]["node"] == "render"
 
 
-@local_only
 def test_result_normalize_and_timings():
     j = jobs.Job(kind="post", result={"run": str(POSTS / FIXTURE), "summary": "s", "variants": []})
     jobs.JobManager.normalize_post_result(None, j)
@@ -206,6 +233,24 @@ def test_result_normalize_and_timings():
     t = client.get("/api/timings").json()
     assert {"median_s", "per_video_second", "samples", "post_median_s", "post_samples"} <= set(t)
     assert "render" in t["post_median_s"], t["post_median_s"]
+
+
+def test_dotdot_names():
+    """%2e%2e arrives as a '..' path param; it must never resolve to the repo root."""
+    n = len(FAKE.submitted)
+    for method, url, body in [
+        ("post", "/api/brands/%2e%2e/calendar/approve", {"items": []}),
+        ("post", "/api/brands/%2e%2e/calendar/plan", {}),
+        ("post", "/api/brands/%2e%2e/performance", None),
+        ("get", "/api/brands/%2e%2e", None),
+        ("post", "/api/outputs/%2e%2e/stats", {"platform": "x"}),
+        ("post", "/api/outputs/%2e%2e/revise", {"feedback": "x"}),
+        ("get", "/api/outputs/%2e%2e", None),
+    ]:
+        r = client.request(method, url, json=body)
+        assert r.status_code == 404, (url, r.status_code, r.text)
+    assert len(FAKE.submitted) == n
+    assert not (ROOT / "calendar.json").exists() and not (ROOT / "stats.json").exists()
 
 
 def test_slugify():
@@ -224,5 +269,6 @@ if __name__ == "__main__":
             except Exception as e:  # noqa: BLE001
                 failed += 1
                 print(f"FAIL  {name}: {type(e).__name__}: {e}")
+    teardown_module()
     print("PASS" if not failed else f"{failed} failed")
     sys.exit(1 if failed else 0)
