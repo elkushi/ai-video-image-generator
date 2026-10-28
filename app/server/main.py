@@ -22,7 +22,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 import library
 from jobs import ACTIVE, FINISHED, manager
-from settings import (BRANDS, CLAUDE_BIN, CLAUDE_MODEL, HOST, OUTPUT, PORT, POSTS, PROMPTS, ROOT, SCHEMAS,
+from settings import (BRANDS, CLAUDE_BIN, CLAUDE_MODEL, DISALLOWED_TOOLS, HOST, OUTPUT, PORT, POSTS, PROMPTS, ROOT, SCHEMAS,
                       UPLOADS, WEB_DIST)
 
 app = FastAPI(title="Factory", docs_url="/api/docs", openapi_url="/api/openapi.json")
@@ -219,7 +219,7 @@ def post_prompt(b: Brief) -> tuple[str, str]:
 # ---- intake (structured questions) -------------------------------------------------------------
 async def claude_json(prompt: str, schema: Path, tools: str = "Read Glob Grep", timeout: int = 300) -> dict:
     cmd = [CLAUDE_BIN, "-p", prompt, "--output-format", "json", "--strict-mcp-config",
-           "--allowedTools", *tools.split(), "--disallowedTools", "AskUserQuestion", "mcp__*",
+           "--allowedTools", *tools.split(), "--disallowedTools", *DISALLOWED_TOOLS,
            "--json-schema", schema.read_text(encoding="utf-8")]
     if CLAUDE_MODEL:
         cmd += ["--model", CLAUDE_MODEL]

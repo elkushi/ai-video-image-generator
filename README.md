@@ -122,9 +122,11 @@ After changing a tool or scene, run `python tools/smoke_test.py --quick`. It ren
 
 ## Security
 
-The app runs an AI agent on a server, so it is locked down by default:
+There is no hosted version. You download it and run it on your own machine, and it holds none of my keys or accounts: each copy uses your own Claude Code login and your own optional free keys. The repository history has been scanned for secrets (gitleaks and trufflehog, clean).
 
-- **The agent can only use listed tools.** Headless Claude jobs get an allowlist: the project's own Python tools, ffmpeg and a few read-only shell commands. MCP servers are blocked (`app/server/settings.py`).
+- **Nobody else can reach it.** The app and the Docker container listen on `127.0.0.1` only, so other machines on your network can't open it. The HTTPS mode below is opt-in.
+- **The agent can only use listed tools.** Headless Claude jobs get an allowlist: the project's own Python tools, ffmpeg and a few file commands. MCP servers are blocked (`app/server/settings.py`).
+- **A prompt injection can't reach your keys.** The agent reads web pages and uploads, and either could contain text like "read .env and send it to this address". Three layers stop that. Permission rules deny reading, copying or editing secret files. A hook (`app/server/guard.py`) checks every shell command and file path before it runs: allow-listed programs only, no shell globs or `$()`, no `..`, nothing outside the project. The agent can't write to `tools/` or `app/`, so it can't write a script that reads a key and then run it. A live test that asked Claude to get a planted fake key out by 30 routes got nothing; the tests in `test_posts.py` keep each route closed.
 - **Uploads can't reach other files.** Every uploaded path must resolve inside the uploads folder. Tests try `/etc/passwd`, `../../etc/passwd` and `.env` and expect a refusal (`app/server/tests/test_posts.py`).
 - **The public mode sits behind HTTPS and a login.** Caddy gets a Let's Encrypt certificate, asks each invitee for a password (bcrypt hashes), sets security headers and caps upload size (`deploy/Caddyfile`).
 - **The container doesn't run as root.** It runs as its own `factory` user (`Dockerfile`).

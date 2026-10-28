@@ -6,16 +6,23 @@ If Claude ends its turn with @@QUESTION, the job waits; an answer resumes the sa
 """
 import json
 import os
+import shlex
 import signal
 import subprocess
+import sys
 import threading
 import time
 import uuid
 from pathlib import Path
 
-from settings import (ALLOWED_TOOLS, CLAUDE_BIN, CLAUDE_MODEL, DISALLOWED_TOOLS, JOBS_DIR, POSTS, PROMPTS, ROOT,
-                      SCHEMAS)
+from settings import (ALLOWED_TOOLS, CLAUDE_BIN, CLAUDE_MODEL, DISALLOWED_TOOLS, GUARD, JOBS_DIR, POSTS, PROMPTS,
+                      ROOT, SCHEMAS)
 from stream_parser import StreamParser, parse_question
+
+# Every Bash call and file access goes through guard.py first. Permission rules alone match the
+# command as text, which a shell glob can slip past, and don't keep Read inside the project.
+GUARD_SETTINGS = json.dumps({"hooks": {"PreToolUse": [{"matcher": "Bash|Read|Grep|Glob|Edit|MultiEdit|Write|NotebookEdit", "hooks": [
+    {"type": "command", "command": f"{shlex.quote(sys.executable)} {shlex.quote(str(GUARD))}"}]}]}})
 
 ACTIVE = {"queued", "running"}
 FINISHED = {"done", "error", "cancelled"}
@@ -139,6 +146,7 @@ class JobManager:
         cmd = [CLAUDE_BIN, "-p", "--output-format", "stream-json", "--verbose",
                "--permission-mode", "acceptEdits", "--strict-mcp-config",
                "--allowedTools", *ALLOWED_TOOLS, "--disallowedTools", *DISALLOWED_TOOLS,
+               "--settings", GUARD_SETTINGS,
                "--append-system-prompt-file", str(PROMPTS / "headless.md")]
         if CLAUDE_MODEL:
             cmd += ["--model", CLAUDE_MODEL]

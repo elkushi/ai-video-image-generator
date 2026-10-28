@@ -25,11 +25,27 @@ ALLOWED_TOOLS = [
     "Read", "Write", "Edit", "Glob", "Grep", "Agent", "Skill", "WebSearch", "WebFetch", "TodoWrite",
     "Bash(.venv/bin/python tools/*)", "Bash(python tools/*)", "Bash(python3 tools/*)",
     "Bash(ffmpeg *)", "Bash(ffprobe *)", "Bash(edge-tts *)", "Bash(.venv/bin/edge-tts *)",
-    "Bash(ls *)", "Bash(cat *)", "Bash(head *)", "Bash(tail *)", "Bash(wc *)", "Bash(file *)",
-    "Bash(mkdir *)", "Bash(cp *)", "Bash(mv *)", "Bash(pdftotext *)", "Bash(identify *)",
+    "Bash(ls *)", "Bash(wc *)", "Bash(file *)", "Bash(mkdir *)", "Bash(pdftotext *)", "Bash(identify *)",
     "Bash(npx tsc *)", "Bash(cd studio && npx tsc *)",
 ]
-DISALLOWED_TOOLS = ["AskUserQuestion", "mcp__*"]
+BASH_PREFIXES = [t[5:-2] for t in ALLOWED_TOOLS if t.startswith("Bash(") and t.endswith("*)")]
+GUARD = Path(__file__).resolve().parent / "guard.py"
+# The agent reads web pages and uploads, so a prompt injection could ask it to read a key and send it
+# out with WebFetch. Deny wins over allow, so these hold even in acceptEdits mode, which otherwise
+# auto-approves cp and mv. Each line closes a route found by a live injection test:
+SECRET_RULES = [
+    # read the secret directly (paths are resolved, so "brands/../.env" is caught too)
+    "Read(**/.env)", "Read(**/.env.*)", "Read(**/credentials.json)", "Read(**/token.json)",
+    "Read(~/.claude/.credentials.json)", "Read(~/.ssh/**)", "Read(~/.config/**)",
+    "Edit(**/.env)", "Edit(**/.env.*)", "Write(**/.env)", "Write(**/.env.*)",
+    # copy it somewhere readable first (uploads go into a kit with tools/keep_upload.py instead)
+    "Bash(cp *)", "Bash(mv *)", "Bash(ln *)", "Bash(rsync *)",
+    # name it in a shell command, e.g. "python3 tools/../.env" prints a line in the traceback
+    "Bash(*.env*)", "Bash(*credentials*)", "Bash(*..*)",
+    # write a new tool that reads it, then run the tool
+    "Write(tools/**)", "Edit(tools/**)", "Write(app/**)", "Edit(app/**)",
+]
+DISALLOWED_TOOLS = ["AskUserQuestion", "mcp__*", *SECRET_RULES]
 
 # Agent subagent_type -> station on the factory floor / node in the graph
 AGENT_NODES = {
